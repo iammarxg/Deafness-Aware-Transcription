@@ -1,5 +1,5 @@
-
 import React from 'react';
+import { marked } from 'marked';
 import { Panel, PanelContent, PanelHeader, PanelActions } from './Panel';
 import { Button } from './Button';
 import { CopyIcon, SparklesIcon } from './Icons';
@@ -32,6 +32,11 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({ notes, isGenerating, onG
         }
     };
 
+    const createMarkup = (markdown: string) => {
+        const rawHtml = marked.parse(markdown) as string;
+        return { __html: rawHtml };
+    };
+
     return (
         <Panel>
             <PanelHeader title="AI Generated Notes">
@@ -43,10 +48,10 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({ notes, isGenerating, onG
             <PanelContent>
                  <div
                     id="notes-content"
-                    className="prose max-w-none p-4 h-64 overflow-y-auto bg-gray-100 rounded-md border border-gray-200 whitespace-pre-wrap"
+                    className="prose max-w-none p-4 h-64 overflow-y-auto bg-gray-100 rounded-md border border-gray-200"
                     style={{ fontSize: `${fontSize}px` }}
+                    dangerouslySetInnerHTML={createMarkup(notes || "Generated notes will appear here...")}
                 >
-                    {notes || "Generated notes will appear here..."}
                 </div>
             </PanelContent>
             <PanelActions>

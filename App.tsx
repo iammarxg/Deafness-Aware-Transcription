@@ -168,7 +168,7 @@ const App: React.FC = () => {
                 }
 
                 // Fix: Handle audio output from the model, as required by the SDK.
-                const base64EncodedAudioString = message.serverContent?.modelTurn?.parts[0]?.inlineData.data;
+                const base64EncodedAudioString = message.serverContent?.modelTurn?.parts[0]?.inlineData?.data;
                 if (base64EncodedAudioString && outputAudioContextRef.current) {
                     const outputAudioContext = outputAudioContextRef.current;
                     nextStartTimeRef.current = Math.max(
