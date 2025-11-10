@@ -1,0 +1,7 @@
+{
+  "name": "Deafness-Aware Lecture Transcription & Note Generator",
+  "description": "An AI-powered tool to transcribe lectures from live audio or uploaded files, generate structured notes, and provide accessibility features like adjustable fonts and simplified language. Supports bilingual English/Arabic transcription and note generation.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
