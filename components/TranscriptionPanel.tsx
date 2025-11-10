@@ -86,7 +86,13 @@ export const TranscriptionPanel: React.FC<TranscriptionPanelProps> = ({
                 </div>
             </PanelHeader>
             <PanelContent>
-                {error && <div className="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg" role="alert">{error}</div>}
+                {error && (
+                    <div 
+                        className="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg" 
+                        role="alert"
+                        dangerouslySetInnerHTML={{ __html: error }}
+                    />
+                )}
                 <div 
                     id="transcription-content"
                     className="prose max-w-none p-4 h-64 overflow-y-auto bg-gray-100 rounded-md border border-gray-200 whitespace-pre-wrap"

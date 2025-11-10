@@ -252,9 +252,14 @@ const App: React.FC = () => {
             setIsProcessing(false);
             setIsRecording(true);
 
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            setError('Failed to start transcription. Please check microphone permissions.');
+            let errorMessage = 'Failed to start transcription. Please check microphone permissions.';
+            const errorString = err.toString();
+            if (errorString.includes('429') || errorString.includes('RESOURCE_EXHAUSTED')) {
+                errorMessage = `You've exceeded your API usage quota. Please check your plan and billing details. For more information, see <a href="https://ai.google.dev/gemini-api/docs/rate-limits" target="_blank" rel="noopener noreferrer" class="font-bold underline">API Rate Limits</a> or <a href="https://ai.dev/usage?tab=rate-limit" target="_blank" rel="noopener noreferrer" class="font-bold underline">your usage dashboard</a>.`;
+            }
+            setError(errorMessage);
             setIsProcessing(false);
         }
     // Fix: Update dependencies to prevent stale closures and infinite loops.
@@ -300,9 +305,14 @@ const App: React.FC = () => {
               contents: prompt,
             });
             setNotes(response.text);
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            setError('Failed to generate notes.');
+            let errorMessage = 'Failed to generate notes.';
+            const errorString = err.toString();
+            if (errorString.includes('429') || errorString.includes('RESOURCE_EXHAUSTED')) {
+                errorMessage = `You've exceeded your API usage quota. Please check your plan and billing details. For more information, see <a href="https://ai.google.dev/gemini-api/docs/rate-limits" target="_blank" rel="noopener noreferrer" class="font-bold underline">API Rate Limits</a> or <a href="https://ai.dev/usage?tab=rate-limit" target="_blank" rel="noopener noreferrer" class="font-bold underline">your usage dashboard</a>.`;
+            }
+            setError(errorMessage);
             setNotes('');
         } finally {
             setIsGeneratingNotes(false);
