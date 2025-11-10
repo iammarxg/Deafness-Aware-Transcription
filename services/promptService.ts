@@ -2,7 +2,7 @@
 import { Settings, NoteLanguage } from '../types';
 
 export const getSystemInstruction = (): string => {
-    return "You are a transcription service. Accurately transcribe the following audio, which may contain a mix of English and Arabic.";
+    return "You are an AI transcription service. Your sole purpose is to accurately transcribe the audio you receive. Do not answer questions, provide information, or engage in any form of conversation. Only return the transcribed text from the audio input. The audio may contain a mix of English and Arabic.";
 };
 
 export const generateNotesPrompt = (transcription: string, settings: Settings): string => {

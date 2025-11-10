@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Settings, NoteLanguage } from '../types';
 
@@ -33,22 +32,22 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ settings, onSettin
             <fieldset disabled={disabled} className="space-y-4">
 
                 <Section title="Accessibility">
-                    <div className="flex items-start">
+                    <label htmlFor="simplified-language" className={`flex items-start p-2 rounded-md border border-gray-200 cursor-pointer transition-colors ${settings.isSimplified ? 'bg-gray-100' : 'bg-white'}`}>
                         <div className="flex items-center h-5">
                             <input
                                 id="simplified-language"
                                 name="simplified-language"
                                 type="checkbox"
-                                className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                                className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-200 rounded"
                                 checked={settings.isSimplified}
                                 onChange={(e) => handleFieldChange('isSimplified', e.target.checked)}
                             />
                         </div>
                         <div className="ml-3 text-sm">
-                            <Label htmlFor="simplified-language">Simplified Language</Label>
+                            <span className="block font-medium text-gray-700">Simplified Language</span>
                             <p className="text-xs text-gray-500">Generate notes using simpler terms.</p>
                         </div>
-                    </div>
+                    </label>
                     <div>
                         <Label htmlFor="font-size">Adjust Font Size</Label>
                         <div className="flex items-center space-x-2 mt-1">
@@ -66,27 +65,27 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ settings, onSettin
                 <hr className="border-gray-200" />
 
                 <Section title="Note Generation">
-                     <div className="flex items-start">
+                    <label htmlFor="auto-generate-notes" className={`flex items-start p-2 rounded-md border border-gray-200 cursor-pointer transition-colors ${settings.autoGenerateNotes ? 'bg-gray-100' : 'bg-white'}`}>
                         <div className="flex items-center h-5">
                             <input
                                 id="auto-generate-notes"
                                 name="auto-generate-notes"
                                 type="checkbox"
-                                className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                                className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-200 rounded"
                                 checked={settings.autoGenerateNotes}
                                 onChange={(e) => handleFieldChange('autoGenerateNotes', e.target.checked)}
                             />
                         </div>
                         <div className="ml-3 text-sm">
-                            <Label htmlFor="auto-generate-notes">Auto-Generate Notes</Label>
+                            <span className="block font-medium text-gray-700">Auto-Generate Notes</span>
                             <p className="text-xs text-gray-500">Generate notes automatically after transcription finishes.</p>
                         </div>
-                    </div>
+                    </label>
                     <div>
                         <Label htmlFor="note-language">Output Language</Label>
                         <select
                             id="note-language"
-                            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-200 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md bg-gray-100"
                             value={settings.noteLanguage}
                             onChange={(e) => handleFieldChange('noteLanguage', e.target.value as NoteLanguage)}
                         >
@@ -100,7 +99,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ settings, onSettin
                         <textarea
                             id="custom-glossary"
                             rows={3}
-                            className="mt-1 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border border-gray-300 rounded-md p-2"
+                            className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border border-gray-200 rounded-md p-2 bg-gray-100"
                             value={settings.customGlossary}
                             onChange={(e) => handleFieldChange('customGlossary', e.target.value)}
                         />

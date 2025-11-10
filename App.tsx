@@ -139,11 +139,16 @@ const App: React.FC = () => {
             // Fix: Re-implement onMessage to handle all server messages correctly.
             const onMessage = async (message: LiveServerMessage) => {
                 let turnComplete = false;
+                
+                // Process the model's transcribed audio response, but do not display it.
+                // This prevents the AI's conversational replies from appearing in the transcript.
                 if (message.serverContent?.outputTranscription) {
                     const text = message.serverContent.outputTranscription.text;
                     currentOutputTranscriptionRef.current += text;
-                    setTranscription(prev => `${prev} ${text}`); // Add model response to transcript
-                } else if (message.serverContent?.inputTranscription) {
+                } 
+                
+                // Process the user's transcribed speech from the microphone and display it.
+                if (message.serverContent?.inputTranscription) {
                     const text = message.serverContent.inputTranscription.text;
                     currentInputTranscriptionRef.current += text;
                     setTranscription(prev => `${prev}${text}`);
