@@ -25,7 +25,7 @@ The notes should be clear, concise, and well-organized. Focus on key concepts, d
             break;
     }
 
-    if (settings.customGlossary && settings.customGlossary !== 'e.g., Photosynthesis, Mitochondria, Quantum Mechanics') {
+    if (settings.customGlossary) {
         prompt += `\nPay special attention to the following technical terms and ensure they are used correctly in the notes: ${settings.customGlossary}\n`;
     }
 

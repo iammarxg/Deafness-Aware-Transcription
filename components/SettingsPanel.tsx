@@ -101,6 +101,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ settings, onSettin
                             rows={3}
                             className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border border-gray-200 rounded-md p-2 bg-gray-100"
                             value={settings.customGlossary}
+                            placeholder="e.g., Photosynthesis, Mitochondria, Quantum Mechanics"
                             onChange={(e) => handleFieldChange('customGlossary', e.target.value)}
                         />
                         <p className="mt-1 text-xs text-gray-500">Comma-separated course-specific terms.</p>

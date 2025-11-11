@@ -66,7 +66,7 @@ const App: React.FC = () => {
         isSimplified: false,
         fontSize: 16,
         noteLanguage: NoteLanguage.ENGLISH,
-        customGlossary: 'e.g., Photosynthesis, Mitochondria, Quantum Mechanics',
+        customGlossary: '',
         autoGenerateNotes: false,
     });
 
