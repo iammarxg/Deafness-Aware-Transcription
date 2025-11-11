@@ -1,4 +1,3 @@
-
 import { Settings, NoteLanguage } from '../types';
 
 export const getSystemInstruction = (): string => {
@@ -19,7 +18,7 @@ The notes should be clear, concise, and well-organized. Focus on key concepts, d
             prompt += "\n**IMPORTANT**: The entire output of the notes must be in Arabic.\n";
             break;
         case NoteLanguage.BILINGUAL:
-            prompt += "\n**IMPORTANT**: Provide the notes bilingually. For each key point, provide the English version first, followed by the Arabic translation.\n";
+            prompt += "\n**IMPORTANT**: Provide the notes bilingually. First, generate the complete set of notes in English. Then, after the English notes are finished, provide the complete Arabic translation of the notes below, separated by a clear heading for each language (e.g., '## English Notes' and '## Arabic Notes').\n";
             break;
         default:
             prompt += "\n**IMPORTANT**: The entire output of the notes must be in English.\n";
