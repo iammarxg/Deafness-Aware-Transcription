@@ -23,12 +23,76 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({ notes, isGenerating, onG
         const content = document.getElementById('notes-content');
         if (content) {
             const printWindow = window.open('', '', 'height=600,width=800');
-            printWindow?.document.write('<html><head><title>Notes</title>');
-            printWindow?.document.write('</head><body>');
-            printWindow?.document.write(content.innerHTML);
-            printWindow?.document.write('</body></html>');
-            printWindow?.document.close();
-            printWindow?.print();
+            if (!printWindow) return;
+
+            const printContent = `
+                <html>
+                    <head>
+                        <title>AI Generated Notes</title>
+                        <style>
+                            @media print {
+                                @page {
+                                    size: A4;
+                                    margin: 1in;
+                                }
+                            }
+                            body {
+                                font-family: Georgia, 'Times New Roman', Times, serif;
+                                font-size: 12pt;
+                                line-height: 1.5;
+                                margin: 40px;
+                                color: #333;
+                                background-color: #fff;
+                            }
+                            .page-title {
+                                font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                                font-size: 24pt;
+                                font-weight: bold;
+                                margin-bottom: 30px;
+                                border-bottom: 1px solid #ccc;
+                                padding-bottom: 10px;
+                                text-align: center;
+                            }
+                            h1, h2, h3, h4, h5, h6 {
+                                font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                                font-weight: bold;
+                                margin-top: 1.5em;
+                                margin-bottom: 0.5em;
+                            }
+                            h1 { font-size: 20pt; }
+                            h2 { font-size: 16pt; }
+                            h3 { font-size: 14pt; }
+                            p { margin-bottom: 1em; }
+                            ul, ol { padding-left: 2em; margin-bottom: 1em; }
+                            li { margin-bottom: 0.5em; }
+                            strong, b { font-weight: bold; }
+                            em, i { font-style: italic; }
+                            code { 
+                                font-family: 'Courier New', Courier, monospace;
+                                background-color: #f4f4f4; 
+                                padding: 2px 4px; 
+                                border-radius: 4px; 
+                                font-size: 0.9em;
+                            }
+                            blockquote {
+                                border-left: 4px solid #ccc;
+                                padding-left: 1em;
+                                color: #666;
+                                margin-left: 0;
+                                font-style: italic;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <h1 class="page-title">AI Generated Notes</h1>
+                        <div>${content.innerHTML}</div>
+                    </body>
+                </html>
+            `;
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            printWindow.focus();
+            printWindow.print();
         }
     };
 

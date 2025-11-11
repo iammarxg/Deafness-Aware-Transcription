@@ -46,14 +46,57 @@ export const TranscriptionPanel: React.FC<TranscriptionPanelProps> = ({
         const content = document.getElementById('transcription-content');
         if (content) {
             const printWindow = window.open('', '', 'height=600,width=800');
-            printWindow?.document.write('<html><head><title>Transcription</title>');
-            printWindow?.document.write('</head><body>');
-            printWindow?.document.write(content.innerHTML);
-            printWindow?.document.write('</body></html>');
-            printWindow?.document.close();
-            printWindow?.print();
+            if (!printWindow) return;
+
+            const printContent = `
+                <html>
+                    <head>
+                        <title>Transcription</title>
+                        <style>
+                            @media print {
+                                @page {
+                                    size: A4;
+                                    margin: 1in;
+                                }
+                            }
+                            body {
+                                font-family: Georgia, 'Times New Roman', Times, serif;
+                                font-size: 12pt;
+                                line-height: 1.5;
+                                margin: 40px;
+                                color: #333;
+                                background-color: #fff;
+                            }
+                            h1 {
+                                font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                                font-size: 24pt;
+                                font-weight: bold;
+                                margin-bottom: 30px;
+                                border-bottom: 1px solid #ccc;
+                                padding-bottom: 10px;
+                                text-align: center;
+                            }
+                            div {
+                               white-space: pre-wrap;
+                               word-wrap: break-word;
+                               text-align: justify;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>Lecture Transcription</h1>
+                        <div>${content.innerText}</div>
+                    </body>
+                </html>
+            `;
+
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            printWindow.focus();
+            printWindow.print();
         }
     };
+
 
     return (
         <Panel>
@@ -106,7 +149,6 @@ export const TranscriptionPanel: React.FC<TranscriptionPanelProps> = ({
                     <CopyIcon />
                     <span>Copy Text</span>
                 </Button>
-                {/* PDF export is simplified to copy for now. window.print() is a better no-lib solution */}
                 <Button onClick={exportToPdf} variant="ghost" disabled={!transcription}>
                     <span>Export as PDF</span>
                 </Button>
