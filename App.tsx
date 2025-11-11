@@ -81,6 +81,7 @@ const App: React.FC = () => {
     const audioContextRef = useRef<AudioContext | null>(null);
     const processorRef = useRef<ScriptProcessorNode | null>(null);
     const mediaStreamSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+    const transcriptionRef = useRef('');
 
     // Fix: Add refs for output audio processing and transcription accumulation, as per guidelines.
     const outputAudioContextRef = useRef<AudioContext | null>(null);
@@ -89,7 +90,36 @@ const App: React.FC = () => {
     const currentInputTranscriptionRef = useRef('');
     const currentOutputTranscriptionRef = useRef('');
 
-    // Fix: Remove handleTranscriptionUpdate as it's replaced by more robust logic in onMessage.
+    // Fix: Remove `transcription` from dependency array to prevent re-creating the function on every update.
+    // The transcription text should always be passed as an argument.
+    const handleGenerateNotes = useCallback(async (textToProcess: string) => {
+        if (!textToProcess || isGeneratingNotes) return;
+
+        setIsGeneratingNotes(true);
+        setError(null);
+        setNotes('Generating notes...');
+
+        try {
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+            const prompt = generateNotesPrompt(textToProcess, settings);
+            const response = await ai.models.generateContent({
+              model: 'gemini-2.5-flash',
+              contents: prompt,
+            });
+            setNotes(response.text);
+        } catch (err: any) {
+            console.error(err);
+            let errorMessage = 'Failed to generate notes.';
+            const errorString = err.toString();
+            if (errorString.includes('429') || errorString.includes('RESOURCE_EXHAUSTED')) {
+                errorMessage = `You've exceeded your API usage quota. Please check your plan and billing details. For more information, see <a href="https://ai.google.dev/gemini-api/docs/rate-limits" target="_blank" rel="noopener noreferrer" class="font-bold underline">API Rate Limits</a> or <a href="https://ai.dev/usage?tab=rate-limit" target="_blank" rel="noopener noreferrer" class="font-bold underline">your usage dashboard</a>.`;
+            }
+            setError(errorMessage);
+            setNotes('');
+        } finally {
+            setIsGeneratingNotes(false);
+        }
+    }, [isGeneratingNotes, settings]);
 
     const stopAudioProcessing = useCallback(() => {
         if (sessionPromiseRef.current) {
@@ -120,15 +150,21 @@ const App: React.FC = () => {
         nextStartTimeRef.current = 0;
         currentInputTranscriptionRef.current = '';
         currentOutputTranscriptionRef.current = '';
+
+        if (settings.autoGenerateNotes && transcriptionRef.current) {
+            handleGenerateNotes(transcriptionRef.current);
+        }
+
         setIsRecording(false);
         setIsProcessing(false);
-    }, []);
+    }, [settings, handleGenerateNotes]);
 
     // Fix: Rewrote startAudioProcessing to fully comply with @google/genai Live API guidelines.
     const startAudioProcessing = useCallback(async (getAudioSource: (context: AudioContext) => Promise<AudioNode>) => {
         if (isRecording || isProcessing) return;
 
         setTranscription('');
+        transcriptionRef.current = '';
         setNotes('');
         setError(null);
         setIsProcessing(true);
@@ -138,7 +174,6 @@ const App: React.FC = () => {
             
             // Fix: Re-implement onMessage to handle all server messages correctly.
             const onMessage = async (message: LiveServerMessage) => {
-                let turnComplete = false;
                 
                 // Process the model's transcribed audio response, but do not display it.
                 // This prevents the AI's conversational replies from appearing in the transcript.
@@ -151,18 +186,15 @@ const App: React.FC = () => {
                 if (message.serverContent?.inputTranscription) {
                     const text = message.serverContent.inputTranscription.text;
                     currentInputTranscriptionRef.current += text;
-                    setTranscription(prev => `${prev}${text}`);
+                    setTranscription(prev => {
+                        const newTranscription = `${prev}${text}`;
+                        transcriptionRef.current = newTranscription;
+                        return newTranscription;
+                    });
                 }
 
                 if (message.serverContent?.turnComplete) {
-                    turnComplete = true;
-                    if (settings.autoGenerateNotes) {
-                        // Use functional update to get latest transcription state to avoid stale closures.
-                        setTranscription(currentTranscription => {
-                            handleGenerateNotes(currentTranscription);
-                            return currentTranscription;
-                        })
-                    }
+                    // Note generation now happens once in stopAudioProcessing.
                     currentInputTranscriptionRef.current = '';
                     currentOutputTranscriptionRef.current = '';
                 }
@@ -263,7 +295,7 @@ const App: React.FC = () => {
             setIsProcessing(false);
         }
     // Fix: Update dependencies to prevent stale closures and infinite loops.
-    }, [isRecording, isProcessing, stopAudioProcessing, settings.autoGenerateNotes]);
+    }, [isRecording, isProcessing, stopAudioProcessing]);
 
     const handleStartLive = useCallback(() => {
         const getMicSource = async (context: AudioContext) => {
@@ -287,37 +319,6 @@ const App: React.FC = () => {
         startAudioProcessing(getFileSource);
     }, [startAudioProcessing, stopAudioProcessing]);
 
-
-    // Fix: Remove `transcription` from dependency array to prevent re-creating the function on every update.
-    // The transcription text should always be passed as an argument.
-    const handleGenerateNotes = useCallback(async (textToProcess: string) => {
-        if (!textToProcess || isGeneratingNotes) return;
-
-        setIsGeneratingNotes(true);
-        setError(null);
-        setNotes('Generating notes...');
-
-        try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
-            const prompt = generateNotesPrompt(textToProcess, settings);
-            const response = await ai.models.generateContent({
-              model: 'gemini-2.5-flash',
-              contents: prompt,
-            });
-            setNotes(response.text);
-        } catch (err: any) {
-            console.error(err);
-            let errorMessage = 'Failed to generate notes.';
-            const errorString = err.toString();
-            if (errorString.includes('429') || errorString.includes('RESOURCE_EXHAUSTED')) {
-                errorMessage = `You've exceeded your API usage quota. Please check your plan and billing details. For more information, see <a href="https://ai.google.dev/gemini-api/docs/rate-limits" target="_blank" rel="noopener noreferrer" class="font-bold underline">API Rate Limits</a> or <a href="https://ai.dev/usage?tab=rate-limit" target="_blank" rel="noopener noreferrer" class="font-bold underline">your usage dashboard</a>.`;
-            }
-            setError(errorMessage);
-            setNotes('');
-        } finally {
-            setIsGeneratingNotes(false);
-        }
-    }, [isGeneratingNotes, settings]);
 
     return (
         <div className="bg-gray-50 min-h-screen text-gray-800 font-sans">
