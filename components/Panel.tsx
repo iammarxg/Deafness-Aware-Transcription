@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 export const Panel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -8,9 +7,9 @@ export const Panel: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 );
 
 export const PanelHeader: React.FC<{ title: string; children?: React.ReactNode }> = ({ title, children }) => (
-    <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+    <div className="p-4 border-b border-gray-200 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 bg-gray-50">
         <h2 className="text-xl font-bold text-gray-800">{title}</h2>
-        <div>{children}</div>
+        {children && <div className="flex justify-end w-full sm:w-auto">{children}</div>}
     </div>
 );
 

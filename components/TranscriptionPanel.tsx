@@ -1,4 +1,3 @@
-
 import React, { useRef } from 'react';
 import { Panel, PanelContent, PanelHeader, PanelActions } from './Panel';
 import { Button } from './Button';
@@ -101,7 +100,7 @@ export const TranscriptionPanel: React.FC<TranscriptionPanelProps> = ({
     return (
         <Panel>
             <PanelHeader title="Transcription">
-                <div className="flex space-x-2">
+                <div className="flex flex-wrap gap-2">
                     {isRecording ? (
                         <Button onClick={onStop} variant="danger" disabled={isProcessing}>
                             <StopIcon />
