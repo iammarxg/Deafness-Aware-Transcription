@@ -2,6 +2,8 @@ import React, { useRef } from 'react';
 import { Panel, PanelContent, PanelHeader, PanelActions } from './Panel';
 import { Button } from './Button';
 import { CopyIcon, MicrophoneIcon, StopIcon, UploadIcon } from './Icons';
+import { UILanguage } from '../types';
+import { t } from '../services/translationService';
 
 interface TranscriptionPanelProps {
     transcription: string;
@@ -12,6 +14,7 @@ interface TranscriptionPanelProps {
     onFileUpload: (file: File) => void;
     fontSize: number;
     error: string | null;
+    uiLanguage: UILanguage;
 }
 
 export const TranscriptionPanel: React.FC<TranscriptionPanelProps> = ({
@@ -23,6 +26,7 @@ export const TranscriptionPanel: React.FC<TranscriptionPanelProps> = ({
     onFileUpload,
     fontSize,
     error,
+    uiLanguage,
 }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -99,22 +103,22 @@ export const TranscriptionPanel: React.FC<TranscriptionPanelProps> = ({
 
     return (
         <Panel>
-            <PanelHeader title="Transcription">
+            <PanelHeader title={t('transcription.title', uiLanguage)}>
                 <div className="flex flex-wrap gap-2">
                     {isRecording ? (
                         <Button onClick={onStop} variant="danger" disabled={isProcessing}>
                             <StopIcon />
-                            <span>Stop</span>
+                            <span>{t('transcription.stopButton', uiLanguage)}</span>
                         </Button>
                     ) : (
                         <>
                             <Button onClick={onStartLive} disabled={isProcessing}>
                                 <MicrophoneIcon />
-                                <span>Start Live</span>
+                                <span>{t('transcription.startLiveButton', uiLanguage)}</span>
                             </Button>
                             <Button onClick={handleUploadClick} variant="secondary" disabled={isProcessing}>
                                 <UploadIcon />
-                                <span>Upload Audio</span>
+                                <span>{t('transcription.uploadButton', uiLanguage)}</span>
                             </Button>
                             <input
                                 type="file"
@@ -130,26 +134,27 @@ export const TranscriptionPanel: React.FC<TranscriptionPanelProps> = ({
             <PanelContent>
                 {error && (
                     <div 
-                        className="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg" 
+                        className="p-4 mb-4 text-sm text-red-700 bg-red-100 dark:bg-red-900/30 dark:text-red-300 rounded-lg" 
                         role="alert"
                         dangerouslySetInnerHTML={{ __html: error }}
                     />
                 )}
                 <div 
                     id="transcription-content"
-                    className="prose max-w-none p-4 h-64 overflow-y-auto bg-gray-100 rounded-md border border-gray-200 whitespace-pre-wrap"
+                    className="prose max-w-none p-4 h-64 overflow-y-auto bg-gray-100 dark:bg-slate-800 rounded-md border border-gray-200 dark:border-slate-700 whitespace-pre-wrap text-gray-800 dark:text-slate-300"
                     style={{ fontSize: `${fontSize}px` }}
+                    dir="auto"
                 >
-                    {isProcessing && !isRecording ? "Initializing transcription service..." : transcription || "Your transcription will appear here..."}
+                    {isProcessing && !isRecording ? t('transcription.initializing', uiLanguage) : transcription || <span class="text-gray-500 dark:text-slate-400">{t('transcription.placeholder', uiLanguage)}</span>}
                 </div>
             </PanelContent>
             <PanelActions>
                  <Button onClick={copyToClipboard} variant="ghost" disabled={!transcription}>
                     <CopyIcon />
-                    <span>Copy Text</span>
+                    <span>{t('transcription.copyButton', uiLanguage)}</span>
                 </Button>
                 <Button onClick={exportToPdf} variant="ghost" disabled={!transcription}>
-                    <span>Export as PDF</span>
+                    <span>{t('transcription.exportPdfButton', uiLanguage)}</span>
                 </Button>
             </PanelActions>
         </Panel>

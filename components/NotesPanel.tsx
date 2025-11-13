@@ -3,6 +3,9 @@ import { marked } from 'marked';
 import { Panel, PanelContent, PanelHeader, PanelActions } from './Panel';
 import { Button } from './Button';
 import { CopyIcon, SparklesIcon } from './Icons';
+import { UILanguage, NoteLanguage } from '../types';
+import { t } from '../services/translationService';
+
 
 interface NotesPanelProps {
     notes: string;
@@ -11,9 +14,11 @@ interface NotesPanelProps {
     fontSize: number;
     hasTranscription: boolean;
     isProcessing: boolean;
+    uiLanguage: UILanguage;
+    noteLanguage: NoteLanguage;
 }
 
-export const NotesPanel: React.FC<NotesPanelProps> = ({ notes, isGenerating, onGenerate, fontSize, hasTranscription, isProcessing }) => {
+export const NotesPanel: React.FC<NotesPanelProps> = ({ notes, isGenerating, onGenerate, fontSize, hasTranscription, isProcessing, uiLanguage, noteLanguage }) => {
 
     const copyToClipboard = () => {
         navigator.clipboard.writeText(notes);
@@ -97,34 +102,38 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({ notes, isGenerating, onG
     };
 
     const createMarkup = (markdown: string) => {
+        if (!markdown) {
+            return { __html: `<p class="text-gray-500 dark:text-slate-400">${t('notes.placeholder', uiLanguage)}</p>` };
+        }
         const rawHtml = marked.parse(markdown) as string;
         return { __html: rawHtml };
     };
 
     return (
         <Panel>
-            <PanelHeader title="AI Generated Notes">
+            <PanelHeader title={t('notes.title', uiLanguage)}>
                 <Button onClick={onGenerate} disabled={isGenerating || !hasTranscription || isProcessing}>
                     <SparklesIcon />
-                    <span>{isGenerating ? 'Generating...' : 'Generate Notes'}</span>
+                    <span>{isGenerating ? t('notes.generatingButton', uiLanguage) : t('notes.generateButton', uiLanguage)}</span>
                 </Button>
             </PanelHeader>
             <PanelContent>
                  <div
                     id="notes-content"
-                    className="prose max-w-none p-4 h-64 overflow-y-auto bg-gray-100 rounded-md border border-gray-200"
+                    className="prose dark:prose-invert max-w-none p-4 h-64 overflow-y-auto bg-gray-100 dark:bg-slate-800 rounded-md border border-gray-200 dark:border-slate-700"
                     style={{ fontSize: `${fontSize}px` }}
-                    dangerouslySetInnerHTML={createMarkup(notes || "Generated notes will appear here...")}
+                    dangerouslySetInnerHTML={createMarkup(notes)}
+                    dir={noteLanguage === NoteLanguage.ARABIC ? 'rtl' : 'ltr'}
                 >
                 </div>
             </PanelContent>
             <PanelActions>
                 <Button onClick={copyToClipboard} variant="ghost" disabled={!notes}>
                     <CopyIcon />
-                    <span>Copy Text</span>
+                    <span>{t('notes.copyButton', uiLanguage)}</span>
                 </Button>
                 <Button onClick={exportToPdf} variant="ghost" disabled={!notes}>
-                    <span>Export as PDF</span>
+                    <span>{t('notes.exportPdfButton', uiLanguage)}</span>
                 </Button>
             </PanelActions>
         </Panel>

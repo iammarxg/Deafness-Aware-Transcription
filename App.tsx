@@ -1,13 +1,14 @@
 
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 // Fix: Import Blob for createBlob function
 import { GoogleGenAI, LiveSession, LiveServerMessage, Modality, Blob } from '@google/genai';
 import { SettingsPanel } from './components/SettingsPanel';
 import { TranscriptionPanel } from './components/TranscriptionPanel';
 import { NotesPanel } from './components/NotesPanel';
 import { Header } from './components/Header';
-import { Settings, TranscriptionMode, NoteLanguage } from './types';
+import { Settings, TranscriptionMode, NoteLanguage, UILanguage, Theme } from './types';
 import { generateNotesPrompt, getSystemInstruction } from './services/promptService';
+import { t } from './services/translationService';
 
 // Fix: Add audio encoding/decoding helper functions as per @google/genai guidelines.
 function encode(bytes: Uint8Array) {
@@ -69,6 +70,8 @@ const App: React.FC = () => {
         customGlossary: '',
         autoGenerateNotes: false,
     });
+    const [uiLanguage, setUiLanguage] = useState<UILanguage>('en');
+    const [theme, setTheme] = useState<Theme>('light');
 
     const [transcription, setTranscription] = useState('');
     const [notes, setNotes] = useState('');
@@ -90,6 +93,31 @@ const App: React.FC = () => {
     const currentInputTranscriptionRef = useRef('');
     const currentOutputTranscriptionRef = useRef('');
 
+    useEffect(() => {
+        const storedTheme = localStorage.getItem('theme') as Theme | null;
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (storedTheme) {
+            setTheme(storedTheme);
+        } else {
+            setTheme(prefersDark ? 'dark' : 'light');
+        }
+    }, []);
+
+    useEffect(() => {
+        if (theme === 'dark') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+        localStorage.setItem('theme', theme);
+    }, [theme]);
+
+    useEffect(() => {
+        document.documentElement.lang = uiLanguage;
+        document.documentElement.dir = uiLanguage === 'ar' ? 'rtl' : 'ltr';
+    }, [uiLanguage]);
+
+
     // Fix: Remove `transcription` from dependency array to prevent re-creating the function on every update.
     // The transcription text should always be passed as an argument.
     const handleGenerateNotes = useCallback(async (textToProcess: string) => {
@@ -97,7 +125,7 @@ const App: React.FC = () => {
 
         setIsGeneratingNotes(true);
         setError(null);
-        setNotes('Generating notes...');
+        setNotes(t('notes.generatingButton', uiLanguage));
 
         try {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
@@ -109,17 +137,17 @@ const App: React.FC = () => {
             setNotes(response.text);
         } catch (err: any) {
             console.error(err);
-            let errorMessage = 'Failed to generate notes.';
+            let errorMessageKey = 'notes.errorGeneric';
             const errorString = err.toString();
             if (errorString.includes('429') || errorString.includes('RESOURCE_EXHAUSTED')) {
-                errorMessage = `You've exceeded your API usage quota. Please check your plan and billing details. For more information, see <a href="https://ai.google.dev/gemini-api/docs/rate-limits" target="_blank" rel="noopener noreferrer" class="font-bold underline">API Rate Limits</a> or <a href="https://ai.dev/usage?tab=rate-limit" target="_blank" rel="noopener noreferrer" class="font-bold underline">your usage dashboard</a>.`;
+                 errorMessageKey = 'transcription.errorApiQuota';
             }
-            setError(errorMessage);
+            setError(t(errorMessageKey, uiLanguage));
             setNotes('');
         } finally {
             setIsGeneratingNotes(false);
         }
-    }, [isGeneratingNotes, settings]);
+    }, [isGeneratingNotes, settings, uiLanguage]);
 
     const stopAudioProcessing = useCallback(() => {
         if (sessionPromiseRef.current) {
@@ -243,7 +271,7 @@ const App: React.FC = () => {
                     onmessage: onMessage,
                     onerror: (e: ErrorEvent) => {
                         console.error('Session error:', e);
-                        setError('An error occurred with the transcription service.');
+                        setError(t('transcription.errorGeneric', uiLanguage));
                         stopAudioProcessing();
                     },
                     onclose: (e: CloseEvent) => {
@@ -286,16 +314,16 @@ const App: React.FC = () => {
 
         } catch (err: any) {
             console.error(err);
-            let errorMessage = 'Failed to start transcription. Please check microphone permissions.';
+            let errorMessageKey = 'transcription.errorMicrophone';
             const errorString = err.toString();
             if (errorString.includes('429') || errorString.includes('RESOURCE_EXHAUSTED')) {
-                errorMessage = `You've exceeded your API usage quota. Please check your plan and billing details. For more information, see <a href="https://ai.google.dev/gemini-api/docs/rate-limits" target="_blank" rel="noopener noreferrer" class="font-bold underline">API Rate Limits</a> or <a href="https://ai.dev/usage?tab=rate-limit" target="_blank" rel="noopener noreferrer" class="font-bold underline">your usage dashboard</a>.`;
+                errorMessageKey = 'transcription.errorApiQuota';
             }
-            setError(errorMessage);
+            setError(t(errorMessageKey, uiLanguage));
             setIsProcessing(false);
         }
     // Fix: Update dependencies to prevent stale closures and infinite loops.
-    }, [isRecording, isProcessing, stopAudioProcessing]);
+    }, [isRecording, isProcessing, stopAudioProcessing, uiLanguage]);
 
     const handleStartLive = useCallback(() => {
         const getMicSource = async (context: AudioContext) => {
@@ -321,12 +349,17 @@ const App: React.FC = () => {
 
 
     return (
-        <div className="bg-gray-50 min-h-screen text-gray-800 font-sans">
-            <Header />
+        <div className="min-h-screen">
+            <Header 
+                uiLanguage={uiLanguage} 
+                onLanguageChange={setUiLanguage} 
+                theme={theme}
+                onThemeChange={setTheme}
+            />
             <main className="p-4 md:p-8">
                 <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
                     <div className="lg:col-span-4 xl:col-span-3">
-                       <SettingsPanel settings={settings} onSettingsChange={setSettings} disabled={isRecording || isProcessing}/>
+                       <SettingsPanel settings={settings} onSettingsChange={setSettings} disabled={isRecording || isProcessing} uiLanguage={uiLanguage} />
                     </div>
                     <div className="lg:col-span-8 xl:col-span-9 space-y-8">
                         <TranscriptionPanel
@@ -338,6 +371,7 @@ const App: React.FC = () => {
                             onFileUpload={handleFileUpload}
                             fontSize={settings.fontSize}
                             error={error}
+                            uiLanguage={uiLanguage}
                         />
                         <NotesPanel
                             notes={notes}
@@ -347,6 +381,8 @@ const App: React.FC = () => {
                             fontSize={settings.fontSize}
                             hasTranscription={transcription.length > 0}
                             isProcessing={isRecording || isProcessing}
+                            uiLanguage={uiLanguage}
+                            noteLanguage={settings.noteLanguage}
                         />
                     </div>
                 </div>

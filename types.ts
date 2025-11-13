@@ -1,8 +1,8 @@
 
 export enum NoteLanguage {
-    ENGLISH = 'English',
-    ARABIC = 'Arabic',
-    BILINGUAL = 'Bilingual (English & Arabic)',
+    ENGLISH = 'ENGLISH',
+    ARABIC = 'ARABIC',
+    BILINGUAL = 'BILINGUAL',
 }
 
 export enum TranscriptionMode {
@@ -17,3 +17,7 @@ export interface Settings {
     customGlossary: string;
     autoGenerateNotes: boolean;
 }
+
+export type UILanguage = 'en' | 'ar';
+
+export type Theme = 'light' | 'dark';

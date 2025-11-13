@@ -7,6 +7,7 @@ export const getSystemInstruction = (): string => {
 export const generateNotesPrompt = (transcription: string, settings: Settings): string => {
     let prompt = `Based on the following lecture transcription, generate structured notes.
 The notes should be clear, concise, and well-organized. Focus on key concepts, definitions, and important takeaways.
+Use markdown for formatting (e.g., headings, bullet points).
 `;
 
     if (settings.isSimplified) {
@@ -18,7 +19,7 @@ The notes should be clear, concise, and well-organized. Focus on key concepts, d
             prompt += "\n**IMPORTANT**: The entire output of the notes must be in Arabic.\n";
             break;
         case NoteLanguage.BILINGUAL:
-            prompt += "\n**IMPORTANT**: Provide the notes bilingually. First, generate the complete set of notes in English. Then, after the English notes are finished, provide the complete Arabic translation of the notes below, separated by a clear heading for each language (e.g., '## English Notes' and '## Arabic Notes').\n";
+            prompt += "\n**IMPORTANT**: Provide the notes bilingually. First, generate the complete set of notes in English. Then, after the English notes are finished, provide the complete Arabic translation of the notes below, separated by a clear heading (e.g., '## English Notes' and '## Arabic Notes'). To ensure correct text direction for the Arabic part, wrap only the Arabic section in a div with a right-to-left direction attribute, like this: `<div dir=\"rtl\">...all your Arabic notes here...</div>`.\n";
             break;
         default:
             prompt += "\n**IMPORTANT**: The entire output of the notes must be in English.\n";
