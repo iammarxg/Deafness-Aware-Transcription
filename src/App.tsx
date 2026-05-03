@@ -265,6 +265,9 @@ const App: React.FC = () => {
                     responseModalities: [Modality.AUDIO],
                     inputAudioTranscription: {},
                     outputAudioTranscription: {},
+                    speechConfig: {
+                        voiceConfig: { prebuiltVoiceConfig: { voiceName: "Charon" } },
+                    },
                     systemInstruction: getSystemInstruction(),
                 },
             });
@@ -280,7 +283,7 @@ const App: React.FC = () => {
                 const pcmBlob = createBlob(inputData);
                 
                 sessionPromiseRef.current?.then((session) => {
-                    session.sendRealtimeInput({ media: pcmBlob });
+                    session.sendRealtimeInput({ audio: pcmBlob });
                 });
             };
 
