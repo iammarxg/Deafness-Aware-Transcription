@@ -5,107 +5,13 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Deafness-Aware Lecture Transcription & Note Generator</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-      body {
-        font-family: 'Inter', sans-serif;
-      }
-      html[lang="ar"] body {
-        font-family: 'Noto Sans Arabic', 'Inter', sans-serif;
-      }
-      @media print {
-        body * {
-          visibility: hidden;
-        }
-        #print-content, #print-content * {
-          visibility: visible;
-        }
-        #print-content {
-          position: absolute;
-          left: 0;
-          top: 0;
-          width: 100%;
-        }
-      }
-      /* Custom styles for rendered notes to fix formatting issues */
-      .prose ul {
-        list-style-type: disc;
-        padding-left: 2rem;
-        margin-top: 1em;
-        margin-bottom: 1em;
-      }
-      .prose ol {
-        list-style-type: decimal;
-        padding-left: 2rem;
-        margin-top: 1em;
-        margin-bottom: 1em;
-      }
-      .prose li {
-        margin-top: 0.5em;
-        margin-bottom: 0.5em;
-      }
-      .prose ul ul, .prose ol ol, .prose ul ol, .prose ol ul {
-        margin-top: 0.5em;
-        margin-bottom: 0.5em;
-      }
-      .prose [dir="rtl"], .prose[dir="rtl"] {
-        text-align: right;
-      }
-      .prose [dir="rtl"] ul, .prose[dir="rtl"] ul, 
-      .prose [dir="rtl"] ol, .prose[dir="rtl"] ol {
-        padding-left: 0;
-        padding-right: 2rem;
-      }
-      .prose [dir="rtl"] h1, .prose[dir="rtl"] h1,
-      .prose [dir="rtl"] h2, .prose[dir="rtl"] h2,
-      .prose [dir="rtl"] h3, .prose[dir="rtl"] h3,
-      .prose [dir="rtl"] h4, .prose[dir="rtl"] h4,
-      .prose [dir="rtl"] h5, .prose[dir="rtl"] h5,
-      .prose [dir="rtl"] h6, .prose[dir="rtl"] h6 {
-        text-align: right;
-      }
-      /* RTL utilities */
-      html[dir="rtl"] .space-x-2 > :not([hidden]) ~ :not([hidden]) {
-        --tw-space-x-reverse: 1;
-        margin-right: calc(0.5rem * var(--tw-space-x-reverse));
-        margin-left: calc(0.5rem * calc(1 - var(--tw-space-x-reverse)));
-      }
-       html[dir="rtl"] .space-x-4 > :not([hidden]) ~ :not([hidden]) {
-        --tw-space-x-reverse: 1;
-        margin-right: calc(1rem * var(--tw-space-x-reverse));
-        margin-left: calc(1rem * calc(1 - var(--tw-space-x-reverse)));
-      }
-       html[dir="rtl"] .ml-3 {
-        margin-left: 0;
-        margin-right: 0.75rem;
-      }
-    </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.29.0",
-    "marked": "https://cdn.jsdelivr.net/npm/marked@13.0.2/lib/marked.esm.js"
-  }
-}
-</script>
-<script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {},
-      },
-      plugins: [],
-    }
-  </script>
-</head>
-  <body class="bg-gray-50 dark:bg-slate-900 text-gray-800 dark:text-slate-200">
+  </head>
+  <body>
     <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
+    <div id="print-content" class="hidden"></div>
+    <script type="module" src="/src/index.tsx"></script>
   </body>
 </html>

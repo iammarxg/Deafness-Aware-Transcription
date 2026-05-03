@@ -1,7 +1,6 @@
-
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-// Fix: Import Blob for createBlob function
 import { GoogleGenAI, LiveSession, LiveServerMessage, Modality, Blob } from '@google/genai';
+import { motion, AnimatePresence } from 'motion/react';
 import { SettingsPanel } from './components/SettingsPanel';
 import { TranscriptionPanel } from './components/TranscriptionPanel';
 import { NotesPanel } from './components/NotesPanel';
@@ -10,7 +9,7 @@ import { Settings, TranscriptionMode, NoteLanguage, UILanguage, Theme } from './
 import { generateNotesPrompt, getSystemInstruction } from './services/promptService';
 import { t } from './services/translationService';
 
-// Fix: Add audio encoding/decoding helper functions as per @google/genai guidelines.
+// Audio encoding/decoding helper functions
 function encode(bytes: Uint8Array) {
     let binary = '';
     const len = bytes.byteLength;
@@ -61,7 +60,6 @@ function createBlob(data: Float32Array): Blob {
     };
 }
 
-
 const App: React.FC = () => {
     const [settings, setSettings] = useState<Settings>({
         isSimplified: false,
@@ -70,8 +68,11 @@ const App: React.FC = () => {
         customGlossary: '',
         autoGenerateNotes: false,
     });
-    const [uiLanguage, setUiLanguage] = useState<UILanguage>('en');
-    const [theme, setTheme] = useState<Theme>('light');
+    const [uiLanguage, setUiLanguage] = useState<UILanguage>(() => {
+        const stored = localStorage.getItem('uiLanguage') as UILanguage;
+        return stored || 'en';
+    });
+    const [theme, setTheme] = useState<Theme>('dark');
 
     const [transcription, setTranscription] = useState('');
     const [notes, setNotes] = useState('');
@@ -86,12 +87,14 @@ const App: React.FC = () => {
     const mediaStreamSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
     const transcriptionRef = useRef('');
 
-    // Fix: Add refs for output audio processing and transcription accumulation, as per guidelines.
     const outputAudioContextRef = useRef<AudioContext | null>(null);
     const nextStartTimeRef = useRef(0);
     const sourcesRef = useRef(new Set<AudioBufferSourceNode>());
     const currentInputTranscriptionRef = useRef('');
     const currentOutputTranscriptionRef = useRef('');
+
+    // Pre-initialize Gemini AI
+    const ai = useRef(new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string }));
 
     useEffect(() => {
         const storedTheme = localStorage.getItem('theme') as Theme | null;
@@ -115,26 +118,23 @@ const App: React.FC = () => {
     useEffect(() => {
         document.documentElement.lang = uiLanguage;
         document.documentElement.dir = uiLanguage === 'ar' ? 'rtl' : 'ltr';
+        localStorage.setItem('uiLanguage', uiLanguage);
     }, [uiLanguage]);
 
-
-    // Fix: Remove `transcription` from dependency array to prevent re-creating the function on every update.
-    // The transcription text should always be passed as an argument.
     const handleGenerateNotes = useCallback(async (textToProcess: string) => {
         if (!textToProcess || isGeneratingNotes) return;
 
         setIsGeneratingNotes(true);
         setError(null);
-        setNotes(t('notes.generatingButton', uiLanguage));
+        setNotes('');
 
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
             const prompt = generateNotesPrompt(textToProcess, settings);
-            const response = await ai.models.generateContent({
-              model: 'gemini-2.5-flash',
-              contents: prompt,
+            const response = await ai.current.models.generateContent({
+                model: 'gemini-3-flash-preview',
+                contents: prompt,
             });
-            setNotes(response.text);
+            setNotes(response.text || '');
         } catch (err: any) {
             console.error(err);
             let errorMessageKey = 'notes.errorGeneric';
@@ -163,16 +163,15 @@ const App: React.FC = () => {
             processorRef.current = null;
         }
         if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
-            audioContextRef.current.close();
+            audioContextRef.current.close().catch(() => {});
             audioContextRef.current = null;
         }
-        // Fix: Add cleanup for output audio context and sources.
         if (outputAudioContextRef.current && outputAudioContextRef.current.state !== 'closed') {
-            outputAudioContextRef.current.close();
+            outputAudioContextRef.current.close().catch(() => {});
             outputAudioContextRef.current = null;
         }
         for (const source of sourcesRef.current) {
-            source.stop();
+            try { source.stop(); } catch(e) {}
         }
         sourcesRef.current.clear();
         nextStartTimeRef.current = 0;
@@ -187,7 +186,6 @@ const App: React.FC = () => {
         setIsProcessing(false);
     }, [settings, handleGenerateNotes]);
 
-    // Fix: Rewrote startAudioProcessing to fully comply with @google/genai Live API guidelines.
     const startAudioProcessing = useCallback(async (getAudioSource: (context: AudioContext) => Promise<AudioNode>) => {
         if (isRecording || isProcessing) return;
 
@@ -198,19 +196,12 @@ const App: React.FC = () => {
         setIsProcessing(true);
 
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
-            
-            // Fix: Re-implement onMessage to handle all server messages correctly.
             const onMessage = async (message: LiveServerMessage) => {
-                
-                // Process the model's transcribed audio response, but do not display it.
-                // This prevents the AI's conversational replies from appearing in the transcript.
                 if (message.serverContent?.outputTranscription) {
                     const text = message.serverContent.outputTranscription.text;
                     currentOutputTranscriptionRef.current += text;
                 } 
                 
-                // Process the user's transcribed speech from the microphone and display it.
                 if (message.serverContent?.inputTranscription) {
                     const text = message.serverContent.inputTranscription.text;
                     currentInputTranscriptionRef.current += text;
@@ -221,13 +212,6 @@ const App: React.FC = () => {
                     });
                 }
 
-                if (message.serverContent?.turnComplete) {
-                    // Note generation now happens once in stopAudioProcessing.
-                    currentInputTranscriptionRef.current = '';
-                    currentOutputTranscriptionRef.current = '';
-                }
-
-                // Fix: Handle audio output from the model, as required by the SDK.
                 const base64EncodedAudioString = message.serverContent?.modelTurn?.parts[0]?.inlineData?.data;
                 if (base64EncodedAudioString && outputAudioContextRef.current) {
                     const outputAudioContext = outputAudioContextRef.current;
@@ -243,8 +227,6 @@ const App: React.FC = () => {
                     );
                     const source = outputAudioContext.createBufferSource();
                     source.buffer = audioBuffer;
-                    // NOTE: source is not connected to destination, so audio is processed but not played.
-                    // This is intentional for a deafness-aware application.
                     source.addEventListener('ended', () => {
                         sourcesRef.current.delete(source);
                     });
@@ -257,24 +239,24 @@ const App: React.FC = () => {
                 const interrupted = message.serverContent?.interrupted;
                 if (interrupted) {
                     for (const source of sourcesRef.current.values()) {
-                        source.stop();
+                        try { source.stop(); } catch(e) {}
                         sourcesRef.current.delete(source);
                     }
                     nextStartTimeRef.current = 0;
                 }
             };
             
-            sessionPromiseRef.current = ai.live.connect({
-                model: 'gemini-2.5-flash-native-audio-preview-09-2025',
+            sessionPromiseRef.current = ai.current.live.connect({
+                model: 'gemini-3.1-flash-live-preview',
                 callbacks: {
                     onopen: () => console.log('Session opened.'),
                     onmessage: onMessage,
-                    onerror: (e: ErrorEvent) => {
+                    onerror: (e: any) => {
                         console.error('Session error:', e);
                         setError(t('transcription.errorGeneric', uiLanguage));
                         stopAudioProcessing();
                     },
-                    onclose: (e: CloseEvent) => {
+                    onclose: (e: any) => {
                        console.log('Session closed.');
                        stopAudioProcessing();
                     },
@@ -282,25 +264,21 @@ const App: React.FC = () => {
                 config: {
                     responseModalities: [Modality.AUDIO],
                     inputAudioTranscription: {},
-                    // Fix: Enable output transcription to get model's spoken response as text.
                     outputAudioTranscription: {},
                     systemInstruction: getSystemInstruction(),
                 },
             });
 
-            // Fix: Cast window to `any` to resolve TypeScript error for `webkitAudioContext`.
-            audioContextRef.current = new ((window as any).AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
-            outputAudioContextRef.current = new ((window as any).AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+            audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
+            outputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
             
             const sourceNode = await getAudioSource(audioContextRef.current);
             processorRef.current = audioContextRef.current.createScriptProcessor(4096, 1, 1);
 
             processorRef.current.onaudioprocess = (audioProcessingEvent) => {
                 const inputData = audioProcessingEvent.inputBuffer.getChannelData(0);
-                // Fix: Use createBlob helper for cleaner code.
                 const pcmBlob = createBlob(inputData);
                 
-                // Fix: Use sessionPromise to prevent race conditions.
                 sessionPromiseRef.current?.then((session) => {
                     session.sendRealtimeInput({ media: pcmBlob });
                 });
@@ -322,7 +300,6 @@ const App: React.FC = () => {
             setError(t(errorMessageKey, uiLanguage));
             setIsProcessing(false);
         }
-    // Fix: Update dependencies to prevent stale closures and infinite loops.
     }, [isRecording, isProcessing, stopAudioProcessing, uiLanguage]);
 
     const handleStartLive = useCallback(() => {
@@ -349,44 +326,66 @@ const App: React.FC = () => {
 
 
     return (
-        <div className="min-h-screen">
+        <div className="min-h-screen font-sans selection:bg-indigo-100 dark:selection:bg-indigo-900/50">
             <Header 
                 uiLanguage={uiLanguage} 
                 onLanguageChange={setUiLanguage} 
                 theme={theme}
                 onThemeChange={setTheme}
             />
-            <main className="p-4 md:p-8">
-                <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <main className="max-w-7xl mx-auto p-4 md:p-8">
+                <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="grid grid-cols-1 lg:grid-cols-12 gap-8"
+                >
                     <div className="lg:col-span-4 xl:col-span-3">
-                       <SettingsPanel settings={settings} onSettingsChange={setSettings} disabled={isRecording || isProcessing} uiLanguage={uiLanguage} />
+                       <SettingsPanel 
+                            settings={settings} 
+                            onSettingsChange={setSettings} 
+                            disabled={isRecording || isProcessing} 
+                            uiLanguage={uiLanguage} 
+                        />
                     </div>
+                    
                     <div className="lg:col-span-8 xl:col-span-9 space-y-8">
-                        <TranscriptionPanel
-                            transcription={transcription}
-                            isRecording={isRecording}
-                            isProcessing={isProcessing}
-                            onStartLive={handleStartLive}
-                            onStop={stopAudioProcessing}
-                            onFileUpload={handleFileUpload}
-                            fontSize={settings.fontSize}
-                            error={error}
-                            uiLanguage={uiLanguage}
-                        />
-                        <NotesPanel
-                            notes={notes}
-                            isGenerating={isGeneratingNotes}
-                            // Fix: Pass current transcription when generating notes manually.
-                            onGenerate={() => handleGenerateNotes(transcription)}
-                            fontSize={settings.fontSize}
-                            hasTranscription={transcription.length > 0}
-                            isProcessing={isRecording || isProcessing}
-                            uiLanguage={uiLanguage}
-                            noteLanguage={settings.noteLanguage}
-                        />
+                        <AnimatePresence mode="wait">
+                            <TranscriptionPanel
+                                key="transcription"
+                                transcription={transcription}
+                                isRecording={isRecording}
+                                isProcessing={isProcessing}
+                                onStartLive={handleStartLive}
+                                onStop={stopAudioProcessing}
+                                onFileUpload={handleFileUpload}
+                                fontSize={settings.fontSize}
+                                error={error}
+                                uiLanguage={uiLanguage}
+                            />
+                            
+                            <NotesPanel
+                                key="notes"
+                                notes={notes}
+                                isGenerating={isGeneratingNotes}
+                                onGenerate={() => handleGenerateNotes(transcription)}
+                                fontSize={settings.fontSize}
+                                hasTranscription={transcription.length > 0}
+                                isProcessing={isRecording || isProcessing}
+                                uiLanguage={uiLanguage}
+                                noteLanguage={settings.noteLanguage}
+                            />
+                        </AnimatePresence>
                     </div>
-                </div>
+                </motion.div>
             </main>
+            
+            {/* Background mesh/atmosphere inspired by Recipe 7 */}
+            <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-indigo-500/10 blur-[120px] dark:bg-indigo-600/5" />
+                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-500/10 blur-[120px] dark:bg-blue-600/5" />
+            </div>
         </div>
     );
 };

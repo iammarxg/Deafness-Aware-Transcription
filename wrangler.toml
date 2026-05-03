@@ -1,0 +1,10 @@
+name = "deafness-aware-lecture-transcription"
+compatibility_date = "2024-04-03"
+pages_build_output_dir = "dist"
+
+[vars]
+# VITE_ prefixed variables will be available to the client
+VITE_APP_NAME = "Deafness-Aware Transcription"
+
+# Non-prefixed variables are only available to Workers/Functions
+# GEMINI_API_KEY = "your-key-here"
